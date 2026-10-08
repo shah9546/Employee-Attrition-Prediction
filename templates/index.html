@@ -333,5 +333,17 @@
 
     </div>
 
+    <!-- Bulk CSV Upload -->
+<section class="bulk-upload">
+    <h2>Bulk Employee Attrition Prediction</h2>
+
+    <p>Upload a CSV file containing multiple employee records.</p>
+
+    <form action="/bulk-predict" method="POST" enctype="multipart/form-data">
+        <input type="file" name="file" accept=".csv" required>
+
+        <button type="submit">Upload CSV & Predict</button>
+    </form>
+</section>
 </body>
 </html>

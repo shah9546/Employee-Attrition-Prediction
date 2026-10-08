@@ -1,11 +1,10 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 import pandas as pd
 import joblib
-
+import io
 
 # Create Flask application
 app = Flask(__name__)
-
 
 # Load trained machine learning model
 model = joblib.load("employee_attrition_model.pkl")
@@ -19,7 +18,6 @@ def home():
 @app.route("/predict", methods=["POST"])
 def predict():
 
-    # Get values from the HTML form
     data = {
         "Age": int(request.form["Age"]),
         "BusinessTravel": request.form["BusinessTravel"],
@@ -28,9 +26,7 @@ def predict():
         "DistanceFromHome": int(request.form["DistanceFromHome"]),
         "Education": int(request.form["Education"]),
         "EducationField": request.form["EducationField"],
-        "EnvironmentSatisfaction": int(
-            request.form["EnvironmentSatisfaction"]
-        ),
+        "EnvironmentSatisfaction": int(request.form["EnvironmentSatisfaction"]),
         "Gender": request.form["Gender"],
         "HourlyRate": int(request.form["HourlyRate"]),
         "JobInvolvement": int(request.form["JobInvolvement"]),
@@ -40,55 +36,26 @@ def predict():
         "MaritalStatus": request.form["MaritalStatus"],
         "MonthlyIncome": int(request.form["MonthlyIncome"]),
         "MonthlyRate": int(request.form["MonthlyRate"]),
-        "NumCompaniesWorked": int(
-            request.form["NumCompaniesWorked"]
-        ),
+        "NumCompaniesWorked": int(request.form["NumCompaniesWorked"]),
         "OverTime": request.form["OverTime"],
-        "PercentSalaryHike": int(
-            request.form["PercentSalaryHike"]
-        ),
-        "PerformanceRating": int(
-            request.form["PerformanceRating"]
-        ),
-        "RelationshipSatisfaction": int(
-            request.form["RelationshipSatisfaction"]
-        ),
-        "StockOptionLevel": int(
-            request.form["StockOptionLevel"]
-        ),
-        "TotalWorkingYears": int(
-            request.form["TotalWorkingYears"]
-        ),
-        "TrainingTimesLastYear": int(
-            request.form["TrainingTimesLastYear"]
-        ),
-        "WorkLifeBalance": int(
-            request.form["WorkLifeBalance"]
-        ),
-        "YearsAtCompany": int(
-            request.form["YearsAtCompany"]
-        ),
-        "YearsInCurrentRole": int(
-            request.form["YearsInCurrentRole"]
-        ),
-        "YearsSinceLastPromotion": int(
-            request.form["YearsSinceLastPromotion"]
-        ),
-        "YearsWithCurrManager": int(
-            request.form["YearsWithCurrManager"]
-        )
+        "PercentSalaryHike": int(request.form["PercentSalaryHike"]),
+        "PerformanceRating": int(request.form["PerformanceRating"]),
+        "RelationshipSatisfaction": int(request.form["RelationshipSatisfaction"]),
+        "StockOptionLevel": int(request.form["StockOptionLevel"]),
+        "TotalWorkingYears": int(request.form["TotalWorkingYears"]),
+        "TrainingTimesLastYear": int(request.form["TrainingTimesLastYear"]),
+        "WorkLifeBalance": int(request.form["WorkLifeBalance"]),
+        "YearsAtCompany": int(request.form["YearsAtCompany"]),
+        "YearsInCurrentRole": int(request.form["YearsInCurrentRole"]),
+        "YearsSinceLastPromotion": int(request.form["YearsSinceLastPromotion"]),
+        "YearsWithCurrManager": int(request.form["YearsWithCurrManager"])
     }
 
-    # Convert input into DataFrame
     input_data = pd.DataFrame([data])
 
-    # Make prediction
     prediction = model.predict(input_data)[0]
-
-    # Get prediction probability
     probability = model.predict_proba(input_data)[0][1]
 
-    # Determine risk level
     if probability >= 0.70:
         risk_level = "High Risk"
     elif probability >= 0.40:
@@ -96,7 +63,6 @@ def predict():
     else:
         risk_level = "Low Risk"
 
-    # Convert prediction to readable result
     if prediction == 1:
         result = "Likely to Leave"
     else:
@@ -110,5 +76,100 @@ def predict():
     )
 
 
+@app.route("/bulk-predict", methods=["POST"])
+def bulk_predict():
+
+    file = request.files.get("file")
+
+    if not file:
+        return "No CSV file uploaded.", 400
+
+    try:
+        df = pd.read_csv(file)
+
+        required_columns = [
+            "Age",
+            "BusinessTravel",
+            "DailyRate",
+            "Department",
+            "DistanceFromHome",
+            "Education",
+            "EducationField",
+            "EnvironmentSatisfaction",
+            "Gender",
+            "HourlyRate",
+            "JobInvolvement",
+            "JobLevel",
+            "JobRole",
+            "JobSatisfaction",
+            "MaritalStatus",
+            "MonthlyIncome",
+            "MonthlyRate",
+            "NumCompaniesWorked",
+            "OverTime",
+            "PercentSalaryHike",
+            "PerformanceRating",
+            "RelationshipSatisfaction",
+            "StockOptionLevel",
+            "TotalWorkingYears",
+            "TrainingTimesLastYear",
+            "WorkLifeBalance",
+            "YearsAtCompany",
+            "YearsInCurrentRole",
+            "YearsSinceLastPromotion",
+            "YearsWithCurrManager"
+        ]
+
+        missing_columns = [
+            column for column in required_columns
+            if column not in df.columns
+        ]
+
+        if missing_columns:
+            return (
+                "Missing required columns: "
+                + ", ".join(missing_columns)
+            ), 400
+
+        predictions = model.predict(df)
+        probabilities = model.predict_proba(df)[:, 1]
+
+        df["Prediction"] = [
+            "Likely to Leave" if p == 1 else "Likely to Stay"
+            for p in predictions
+        ]
+
+        df["Attrition Probability"] = (
+            probabilities * 100
+        ).round(2)
+
+        df["Risk Level"] = [
+            "High Risk" if p >= 0.70
+            else "Medium Risk" if p >= 0.40
+            else "Low Risk"
+            for p in probabilities
+        ]
+
+        output = io.BytesIO()
+
+        df.to_csv(output, index=False)
+
+        output.seek(0)
+
+        return send_file(
+            output,
+            mimetype="text/csv",
+            as_attachment=True,
+            download_name="attrition_predictions.csv"
+        )
+
+    except Exception as e:
+        return f"Error processing CSV: {str(e)}", 400
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
