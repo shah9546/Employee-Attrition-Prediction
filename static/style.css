@@ -215,3 +215,19 @@ button:hover {
     font-size: 16px;
     font-weight: bold;
 }
+.template-button {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 10px 18px;
+    background: #ffffff;
+    border: 1px solid #222;
+    border-radius: 6px;
+    color: #222;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.template-button:hover {
+    background: #222;
+    color: #ffffff;
+}

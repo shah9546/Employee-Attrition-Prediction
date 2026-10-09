@@ -9,6 +9,55 @@ app = Flask(__name__)
 # Load trained machine learning model
 model = joblib.load("employee_attrition_model.pkl")
 
+@app.route("/download-template")
+def download_template():
+
+    columns = [
+        "Age",
+        "BusinessTravel",
+        "DailyRate",
+        "Department",
+        "DistanceFromHome",
+        "Education",
+        "EducationField",
+        "EnvironmentSatisfaction",
+        "Gender",
+        "HourlyRate",
+        "JobInvolvement",
+        "JobLevel",
+        "JobRole",
+        "JobSatisfaction",
+        "MaritalStatus",
+        "MonthlyIncome",
+        "MonthlyRate",
+        "NumCompaniesWorked",
+        "OverTime",
+        "PercentSalaryHike",
+        "PerformanceRating",
+        "RelationshipSatisfaction",
+        "StockOptionLevel",
+        "TotalWorkingYears",
+        "TrainingTimesLastYear",
+        "WorkLifeBalance",
+        "YearsAtCompany",
+        "YearsInCurrentRole",
+        "YearsSinceLastPromotion",
+        "YearsWithCurrManager"
+    ]
+
+    template = pd.DataFrame(columns=columns)
+
+    output = io.BytesIO(
+        template.to_csv(index=False).encode("utf-8")
+    )
+
+    return send_file(
+        output,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="employee_attrition_template.csv"
+    )
+
 
 @app.route("/")
 def home():
