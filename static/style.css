@@ -130,6 +130,7 @@ button:hover {
     padding: 25px;
     border-radius: 12px;
     border: 1px solid #ddd;
+    text-align: center;
 }
 
 .bulk-upload h2 {
