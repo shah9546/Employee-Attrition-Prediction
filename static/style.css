@@ -150,3 +150,67 @@ button:hover {
     border-radius: 6px;
     cursor: pointer;
 }
+/* Bulk prediction results */
+
+.results-container {
+    max-width: 95%;
+    margin: 40px auto;
+}
+
+.results-container h1 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.results-container p {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.results-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+}
+
+.results-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+}
+
+.results-table th,
+.results-table td {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.results-table th {
+    font-weight: bold;
+}
+
+.results-actions {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.back-button {
+    display: inline-block;
+    padding: 10px 18px;
+    text-decoration: none;
+    border-radius: 6px;
+}
+.download-button {
+    display: block;
+    width: 100%;
+    padding: 12px 18px;
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bulk Prediction Results</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<script>
+function downloadCSV() {
+    const table = document.querySelector(".results-table");
+    const rows = table.querySelectorAll("tr");
+
+    let csv = [];
+
+    rows.forEach(row => {
+        const columns = row.querySelectorAll("th, td");
+
+        const rowData = Array.from(columns).map(column => {
+            let value = column.innerText.replace(/"/g, '""');
+            return `"${value}"`;
+        });
+
+        csv.push(rowData.join(","));
+    });
+
+    const csvFile = new Blob(
+        [csv.join("\n")],
+        { type: "text/csv" }
+    );
+
+    const downloadLink = document.createElement("a");
+
+    downloadLink.href = URL.createObjectURL(csvFile);
+    downloadLink.download = "attrition_predictions.csv";
+
+    downloadLink.click();
+
+    URL.revokeObjectURL(downloadLink.href);
+}
+</script>
+<body>
+
+    <div class="results-container">
+
+        <h1>Bulk Prediction Results</h1>
+
+        <p>
+            Employee attrition predictions generated successfully.
+        </p>
+
+        <div class="results-table-container">
+            {{ tables[0] | safe }}
+        </div>
+
+        <div class="results-actions">
+
+    <button onclick="downloadCSV()" class="download-button">
+        Download Results CSV
+    </button>
+
+    <a href="/" class="back-button">
+        Back to Home
+    </a>
+
+</div>
+
+    </div>
+
+</body>
+</html>

@@ -15,6 +15,10 @@ def home():
     return render_template("index.html")
 
 
+# ---------------------------------------------------------
+# Single Employee Prediction
+# ---------------------------------------------------------
+
 @app.route("/predict", methods=["POST"])
 def predict():
 
@@ -26,7 +30,9 @@ def predict():
         "DistanceFromHome": int(request.form["DistanceFromHome"]),
         "Education": int(request.form["Education"]),
         "EducationField": request.form["EducationField"],
-        "EnvironmentSatisfaction": int(request.form["EnvironmentSatisfaction"]),
+        "EnvironmentSatisfaction": int(
+            request.form["EnvironmentSatisfaction"]
+        ),
         "Gender": request.form["Gender"],
         "HourlyRate": int(request.form["HourlyRate"]),
         "JobInvolvement": int(request.form["JobInvolvement"]),
@@ -36,24 +42,49 @@ def predict():
         "MaritalStatus": request.form["MaritalStatus"],
         "MonthlyIncome": int(request.form["MonthlyIncome"]),
         "MonthlyRate": int(request.form["MonthlyRate"]),
-        "NumCompaniesWorked": int(request.form["NumCompaniesWorked"]),
+        "NumCompaniesWorked": int(
+            request.form["NumCompaniesWorked"]
+        ),
         "OverTime": request.form["OverTime"],
-        "PercentSalaryHike": int(request.form["PercentSalaryHike"]),
-        "PerformanceRating": int(request.form["PerformanceRating"]),
-        "RelationshipSatisfaction": int(request.form["RelationshipSatisfaction"]),
-        "StockOptionLevel": int(request.form["StockOptionLevel"]),
-        "TotalWorkingYears": int(request.form["TotalWorkingYears"]),
-        "TrainingTimesLastYear": int(request.form["TrainingTimesLastYear"]),
-        "WorkLifeBalance": int(request.form["WorkLifeBalance"]),
-        "YearsAtCompany": int(request.form["YearsAtCompany"]),
-        "YearsInCurrentRole": int(request.form["YearsInCurrentRole"]),
-        "YearsSinceLastPromotion": int(request.form["YearsSinceLastPromotion"]),
-        "YearsWithCurrManager": int(request.form["YearsWithCurrManager"])
+        "PercentSalaryHike": int(
+            request.form["PercentSalaryHike"]
+        ),
+        "PerformanceRating": int(
+            request.form["PerformanceRating"]
+        ),
+        "RelationshipSatisfaction": int(
+            request.form["RelationshipSatisfaction"]
+        ),
+        "StockOptionLevel": int(
+            request.form["StockOptionLevel"]
+        ),
+        "TotalWorkingYears": int(
+            request.form["TotalWorkingYears"]
+        ),
+        "TrainingTimesLastYear": int(
+            request.form["TrainingTimesLastYear"]
+        ),
+        "WorkLifeBalance": int(
+            request.form["WorkLifeBalance"]
+        ),
+        "YearsAtCompany": int(
+            request.form["YearsAtCompany"]
+        ),
+        "YearsInCurrentRole": int(
+            request.form["YearsInCurrentRole"]
+        ),
+        "YearsSinceLastPromotion": int(
+            request.form["YearsSinceLastPromotion"]
+        ),
+        "YearsWithCurrManager": int(
+            request.form["YearsWithCurrManager"]
+        )
     }
 
     input_data = pd.DataFrame([data])
 
     prediction = model.predict(input_data)[0]
+
     probability = model.predict_proba(input_data)[0][1]
 
     if probability >= 0.70:
@@ -76,6 +107,10 @@ def predict():
     )
 
 
+# ---------------------------------------------------------
+# Bulk CSV Prediction
+# ---------------------------------------------------------
+
 @app.route("/bulk-predict", methods=["POST"])
 def bulk_predict():
 
@@ -85,8 +120,11 @@ def bulk_predict():
         return "No CSV file uploaded.", 400
 
     try:
+
+        # Read uploaded CSV
         df = pd.read_csv(file)
 
+        # Required columns
         required_columns = [
             "Age",
             "BusinessTravel",
@@ -120,8 +158,10 @@ def bulk_predict():
             "YearsWithCurrManager"
         ]
 
+        # Check for missing columns
         missing_columns = [
-            column for column in required_columns
+            column
+            for column in required_columns
             if column not in df.columns
         ]
 
@@ -131,43 +171,73 @@ def bulk_predict():
                 + ", ".join(missing_columns)
             ), 400
 
+        # Make predictions
         predictions = model.predict(df)
+
         probabilities = model.predict_proba(df)[:, 1]
 
+        # Add prediction
         df["Prediction"] = [
-            "Likely to Leave" if p == 1 else "Likely to Stay"
+            "Likely to Leave"
+            if p == 1
+            else "Likely to Stay"
             for p in predictions
         ]
 
+        # Add probability
         df["Attrition Probability"] = (
             probabilities * 100
         ).round(2)
 
+        # Add risk level
         df["Risk Level"] = [
-            "High Risk" if p >= 0.70
-            else "Medium Risk" if p >= 0.40
+            "High Risk"
+            if p >= 0.70
+            else "Medium Risk"
+            if p >= 0.40
             else "Low Risk"
             for p in probabilities
         ]
 
-        output = io.BytesIO()
+        # Put prediction results first
+        result_columns = [
+            "Prediction",
+            "Attrition Probability",
+            "Risk Level"
+        ]
 
-        df.to_csv(output, index=False)
+        other_columns = [
+            column
+            for column in df.columns
+            if column not in result_columns
+        ]
 
-        output.seek(0)
+        df = df[result_columns + other_columns]
 
-        return send_file(
-            output,
-            mimetype="text/csv",
-            as_attachment=True,
-            download_name="attrition_predictions.csv"
+        # Display results on website
+        return render_template(
+            "bulk_results.html",
+            tables=[
+                df.to_html(
+                    classes="results-table",
+                    index=False
+                )
+            ]
         )
 
     except Exception as e:
-        return f"Error processing CSV: {str(e)}", 400
 
+        return (
+            f"Error processing CSV: {str(e)}"
+        ), 400
+
+
+# ---------------------------------------------------------
+# Run Flask Application
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=5000,
