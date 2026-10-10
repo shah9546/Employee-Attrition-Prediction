@@ -9,6 +9,7 @@ app = Flask(__name__)
 # Load trained machine learning model
 model = joblib.load("employee_attrition_model.pkl")
 
+
 @app.route("/download-template")
 def download_template():
 
@@ -215,9 +216,12 @@ def bulk_predict():
         ]
 
         if missing_columns:
-            return (
-                "Missing required columns: "
-                + ", ".join(missing_columns)
+            return render_template(
+                "index.html",
+                error_message=(
+                    "The uploaded CSV is missing required columns: "
+                    + ", ".join(missing_columns)
+                )
             ), 400
 
         # Make predictions

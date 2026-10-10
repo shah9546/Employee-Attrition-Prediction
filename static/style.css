@@ -231,3 +231,14 @@ button:hover {
     background: #222;
     color: #ffffff;
 }
+.error-message {
+    margin: 20px auto;
+    padding: 15px 20px;
+    max-width: 800px;
+    border: 1px solid #dc3545;
+    border-radius: 6px;
+    background: #f8d7da;
+    color: #842029;
+    font-weight: bold;
+    text-align: center;
+}

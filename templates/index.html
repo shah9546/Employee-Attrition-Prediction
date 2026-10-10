@@ -21,6 +21,11 @@
         <p class="subtitle">
             Enter employee information to predict the probability of attrition.
         </p>
+        {% if error_message %}
+<div class="error-message">
+    {{ error_message }}
+</div>
+{% endif %}
 
         <form action="/predict" method="POST">
 
